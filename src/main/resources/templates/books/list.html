@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Books | BookLib</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        body{background:#f0f4f8;font-family:'Segoe UI',sans-serif;}
+        .sidebar{width:240px;min-height:100vh;background:linear-gradient(180deg,#1e3a5f,#2563eb);
+            position:fixed;top:0;left:0;padding-top:20px;z-index:100;}
+        .sidebar .brand{color:#fff;font-size:1.3rem;font-weight:700;
+            padding:16px 20px 24px;border-bottom:1px solid rgba(255,255,255,.15);}
+        .sidebar .nav-link{color:rgba(255,255,255,.75);padding:10px 20px;
+            border-radius:0 30px 30px 0;margin-right:12px;transition:all .2s;
+            display:flex;align-items:center;gap:10px;}
+        .sidebar .nav-link:hover,.sidebar .nav-link.active{color:#fff;background:rgba(255,255,255,.15);}
+        .main-content{margin-left:240px;padding:24px;}
+        .topbar{background:#fff;border-radius:12px;padding:14px 24px;
+            box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:24px;
+            display:flex;justify-content:space-between;align-items:center;}
+        .card{border:none;border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,.07);}
+        .card-header{background:#fff;border-bottom:1px solid #f0f0f0;
+            border-radius:14px 14px 0 0!important;padding:16px 20px;font-weight:600;}
+        .table th{font-weight:600;font-size:.8rem;text-transform:uppercase;
+            letter-spacing:.05em;color:#64748b;background:#f8fafc;border:none;}
+        .table td{vertical-align:middle;border-color:#f1f5f9;}
+        .search-wrap{position:relative;}
+        .search-wrap .bi-search{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;}
+        .search-box{padding-left:36px;border-radius:30px;border:1px solid #e2e8f0;}
+        .page-link{color:#2563eb;}
+        .page-item.active .page-link{background:#2563eb;border-color:#2563eb;}
+    </style>
+</head>
+<body>
+<nav class="sidebar">
+    <div class="brand"><i class="bi bi-book-half me-2"></i> BookLib</div>
+    <ul class="nav flex-column mt-3">
+        <li><a class="nav-link" th:href="@{/dashboard}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li><a class="nav-link active" th:href="@{/books}"><i class="bi bi-journal-richtext"></i> Books</a></li>
+        <li><a class="nav-link" th:href="@{/users}"><i class="bi bi-people"></i> Users</a></li>
+        <li><a class="nav-link" th:href="@{/issues}"><i class="bi bi-arrow-left-right"></i> Issues</a></li>
+        <li><a class="nav-link" th:href="@{/issues/overdue}"><i class="bi bi-exclamation-triangle"></i> Overdue</a></li>
+    </ul>
+</nav>
+
+<div class="main-content">
+    <div class="topbar">
+        <h5 class="mb-0">Books</h5>
+        <a th:href="@{/books/new}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i> Add Book
+        </a>
+    </div>
+
+    <!-- Flash message -->
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <!-- Search + Sort Form -->
+            <form th:action="@{/books}" method="get" class="d-flex gap-2 align-items-center flex-wrap">
+                <div class="search-wrap flex-grow-1">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="keyword" class="form-control search-box"
+                           placeholder="Search by title or author..."
+                           th:value="${keyword}"/>
+                </div>
+                <select name="sortBy" class="form-select" style="width:140px">
+                    <option value="bookTitle"  th:selected="${sortBy=='bookTitle'}">Title</option>
+                    <option value="bookAuthor" th:selected="${sortBy=='bookAuthor'}">Author</option>
+                    <option value="bookGenre"  th:selected="${sortBy=='bookGenre'}">Genre</option>
+                </select>
+                <select name="sortDir" class="form-select" style="width:120px">
+                    <option value="asc"  th:selected="${sortDir=='asc'}">A → Z</option>
+                    <option value="desc" th:selected="${sortDir=='desc'}">Z → A</option>
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i>
+                </button>
+                <a th:href="@{/books}" class="btn btn-outline-secondary">Reset</a>
+            </form>
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table mb-0">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>
+                        <a th:href="@{/books(keyword=${keyword},sortBy='bookTitle',
+                            sortDir=${sortBy=='bookTitle'?reverseSortDir:'asc'},page=0)}"
+                           class="text-decoration-none text-reset">
+                            Title
+                            <i th:if="${sortBy=='bookTitle'}"
+                               th:class="${sortDir=='asc'} ? 'bi bi-sort-up sort-icon' : 'bi bi-sort-down sort-icon'"></i>
+                        </a>
+                    </th>
+                    <th>Author</th>
+                    <th>Genre</th>
+                    <th>Total</th>
+                    <th>Available</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${bookPage.isEmpty()}">
+                    <td colspan="7" class="text-center text-muted py-4">No books found.</td>
+                </tr>
+                <tr th:each="book, iter : ${bookPage.content}">
+                    <td class="text-muted" th:text="${bookPage.number * bookPage.size + iter.count}"></td>
+                    <td>
+                        <a th:href="@{/books/{id}(id=${book.bookId})}"
+                           class="text-decoration-none fw-500"
+                           th:text="${book.bookTitle}"></a>
+                    </td>
+                    <td th:text="${book.bookAuthor}"></td>
+                    <td><span class="badge bg-light text-dark border" th:text="${book.bookGenre}"></span></td>
+                    <td th:text="${book.bookTotalCopies}"></td>
+                    <td>
+                        <span th:classappend="${book.bookAvailableCopies == 0} ? 'bg-danger' :
+                                             (${book.bookAvailableCopies <= 3} ? 'bg-warning text-dark' : 'bg-success')"
+                              class="badge" th:text="${book.bookAvailableCopies}"></span>
+                    </td>
+                    <td>
+                        <a th:href="@{/books/{id}/edit(id=${book.bookId})}"
+                           class="btn btn-sm btn-outline-primary me-1">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a th:href="@{/books/{id}/delete(id=${book.bookId})}"
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('Delete this book?')">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <!-- Pagination -->
+        <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                Showing <span th:text="${bookPage.numberOfElements}"></span>
+                of <span th:text="${bookPage.totalElements}"></span> books
+            </small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${bookPage.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/books(keyword=${keyword},page=${bookPage.number-1},
+                               size=${bookPage.size},sortBy=${sortBy},sortDir=${sortDir})}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    <li th:each="pageNum : ${pageNumbers}"
+                        class="page-item"
+                        th:classappend="${pageNum - 1 == bookPage.number} ? 'active'">
+                        <a class="page-link" th:text="${pageNum}"
+                           th:href="@{/books(keyword=${keyword},page=${pageNum-1},
+                               size=${bookPage.size},sortBy=${sortBy},sortDir=${sortDir})}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${bookPage.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/books(keyword=${keyword},page=${bookPage.number+1},
+                               size=${bookPage.size},sortBy=${sortBy},sortDir=${sortDir})}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

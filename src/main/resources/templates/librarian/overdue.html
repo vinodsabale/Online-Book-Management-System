@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/><title>Overdue Books | BookLib</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        body{background:#f0f4f8;font-family:'Segoe UI',sans-serif;}
+        .sidebar{width:240px;min-height:100vh;background:linear-gradient(180deg,#064e3b,#059669);
+            position:fixed;top:0;left:0;padding-top:20px;}
+        .sidebar .brand{color:#fff;font-size:1.3rem;font-weight:700;
+            padding:16px 20px 24px;border-bottom:1px solid rgba(255,255,255,.15);}
+        .sidebar .nav-link{color:rgba(255,255,255,.75);padding:10px 20px;
+            border-radius:0 30px 30px 0;margin-right:12px;display:flex;align-items:center;gap:10px;}
+        .sidebar .nav-link:hover,.sidebar .nav-link.active{color:#fff;background:rgba(255,255,255,.15);}
+        .main-content{margin-left:240px;padding:24px;}
+        .topbar{background:#fff;border-radius:12px;padding:14px 24px;
+            box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:24px;}
+        .card{border:none;border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,.07);}
+        .table th{font-weight:600;font-size:.8rem;text-transform:uppercase;
+            letter-spacing:.05em;color:#64748b;background:#f8fafc;border:none;}
+        .table td{vertical-align:middle;border-color:#f1f5f9;}
+    </style>
+</head>
+<body>
+<nav class="sidebar">
+    <div class="brand"><i class="bi bi-book-half me-2"></i> BookLib</div>
+    <ul class="nav flex-column mt-3">
+        <li><a class="nav-link" th:href="@{/librarian/dashboard}">
+            <i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li><a class="nav-link" th:href="@{/librarian/books}">
+            <i class="bi bi-journal-richtext"></i> Books</a></li>
+        <li><a class="nav-link" th:href="@{/librarian/users}">
+            <i class="bi bi-people"></i> Users</a></li>
+        <li><a class="nav-link" th:href="@{/librarian/issues}">
+            <i class="bi bi-arrow-left-right"></i> Issues</a></li>
+        <li><a class="nav-link active" th:href="@{/librarian/issues/overdue}">
+            <i class="bi bi-exclamation-triangle"></i> Overdue</a></li>
+        <li class="mt-5">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="nav-link border-0 bg-transparent text-danger w-100">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </form>
+        </li>
+    </ul>
+</nav>
+
+<div class="main-content">
+    <div class="topbar d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="mb-0 text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Overdue Books</h5>
+            <small class="text-muted" th:text="${overdueIssues.size()} + ' records found'"></small>
+        </div>
+        <a th:href="@{/librarian/issues}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back to Issues
+        </a>
+    </div>
+
+    <div class="card" th:if="${overdueIssues.isEmpty()}">
+        <div class="card-body text-center py-5 text-muted">
+            <i class="bi bi-check-circle text-success" style="font-size:3rem"></i>
+            <p class="mt-2">No overdue books. Great job!</p>
+        </div>
+    </div>
+
+    <div class="card" th:if="${!overdueIssues.isEmpty()}">
+        <div class="card-body p-0">
+            <table class="table mb-0">
+                <thead><tr>
+                    <th>#</th><th>Book</th><th>Member</th>
+                    <th>Issued</th><th>Due Date</th><th>Days Overdue</th><th>Est. Fine</th><th>Action</th>
+                </tr></thead>
+                <tbody>
+                <tr th:each="issue, iter : ${overdueIssues}" class="table-danger">
+                    <td th:text="${iter.count}"></td>
+                    <td th:text="${issue.bookTitle}"></td>
+                    <td th:text="${issue.userName}"></td>
+                    <td th:text="${issue.issuedDate}"></td>
+                    <td class="fw-bold text-danger" th:text="${issue.dueDate}"></td>
+                    <td>
+                        <span class="badge bg-danger"
+                              th:text="${#temporals.createNow().toLocalDate().toEpochDay()
+                                       - issue.dueDate.toEpochDay()} + ' days'"></span>
+                    </td>
+                    <td class="text-danger fw-bold">
+                        <span th:text="'₹' + ${(#temporals.createNow().toLocalDate().toEpochDay()
+                                              - issue.dueDate.toEpochDay()) * 5}"></span>
+                    </td>
+                    <td>
+                        <a th:href="@{/librarian/issues/{id}/return(id=${issue.issueId})}"
+                           class="btn btn-sm btn-success"
+                           onclick="return confirm('Confirm return and collect fine?')">
+                            <i class="bi bi-box-arrow-in-left me-1"></i> Return
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

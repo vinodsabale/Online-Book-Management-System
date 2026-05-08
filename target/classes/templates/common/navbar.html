@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="sidebar" class="sidebar">
+    <div class="brand">
+        <i class="bi bi-book-half me-2"></i> BookLib
+    </div>
+    <ul class="nav flex-column mt-3">
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/dashboard}"
+               th:classappend="${#httpServletRequest.requestURI == '/dashboard'
+                or #httpServletRequest.requestURI == '/'} ? 'active'">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/books}"
+               th:classappend="${#httpServletRequest.requestURI.startsWith('/books')} ? 'active'">
+                <i class="bi bi-journal-richtext"></i> Books
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/users}"
+               th:classappend="${#httpServletRequest.requestURI.startsWith('/users')} ? 'active'">
+                <i class="bi bi-people"></i> Users
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:href="@{/issues}"
+               th:classappend="${#httpServletRequest.requestURI.startsWith('/issues')} ? 'active'">
+                <i class="bi bi-arrow-left-right"></i> Issues
+            </a>
+        </li>
+        <li class="nav-item mt-2">
+            <a class="nav-link" th:href="@{/issues/overdue}"
+               th:classappend="${#httpServletRequest.requestURI.startsWith('/issues/overdue')} ? 'active'">
+                <i class="bi bi-exclamation-triangle"></i> Overdue Books
+            </a>
+        </li>
+        <li class="nav-item mt-5">
+            <a class="nav-link text-danger" th:href="@{/logout}">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </li>
+    </ul>
+</nav>
+</body>
+</html>

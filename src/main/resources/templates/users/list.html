@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Users | BookLib</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet"/>
+    <style>
+        body{background:#f0f4f8;font-family:'Segoe UI',sans-serif;}
+        .sidebar{width:240px;min-height:100vh;background:linear-gradient(180deg,#1e3a5f,#2563eb);
+            position:fixed;top:0;left:0;padding-top:20px;}
+        .sidebar .brand{color:#fff;font-size:1.3rem;font-weight:700;
+            padding:16px 20px 24px;border-bottom:1px solid rgba(255,255,255,.15);}
+        .sidebar .nav-link{color:rgba(255,255,255,.75);padding:10px 20px;
+            border-radius:0 30px 30px 0;margin-right:12px;display:flex;align-items:center;gap:10px;}
+        .sidebar .nav-link:hover,.sidebar .nav-link.active{color:#fff;background:rgba(255,255,255,.15);}
+        .main-content{margin-left:240px;padding:24px;}
+        .topbar{background:#fff;border-radius:12px;padding:14px 24px;
+            box-shadow:0 1px 4px rgba(0,0,0,.07);margin-bottom:24px;
+            display:flex;justify-content:space-between;align-items:center;}
+        .card{border:none;border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,.07);}
+        .card-header{background:#fff;border-bottom:1px solid #f0f0f0;padding:16px 20px;font-weight:600;}
+        .table th{font-weight:600;font-size:.8rem;text-transform:uppercase;
+            letter-spacing:.05em;color:#64748b;background:#f8fafc;border:none;}
+        .table td{vertical-align:middle;border-color:#f1f5f9;}
+        .search-wrap{position:relative;}
+        .search-wrap .bi{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;}
+        .search-box{padding-left:36px;border-radius:30px;border:1px solid #e2e8f0;}
+        .page-link{color:#2563eb;}
+        .page-item.active .page-link{background:#2563eb;border-color:#2563eb;}
+    </style>
+</head>
+<body>
+<nav class="sidebar">
+    <div class="brand"><i class="bi bi-book-half me-2"></i> BookLib</div>
+    <ul class="nav flex-column mt-3">
+        <li><a class="nav-link" th:href="@{/dashboard}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+        <li><a class="nav-link" th:href="@{/books}"><i class="bi bi-journal-richtext"></i> Books</a></li>
+        <li><a class="nav-link active" th:href="@{/users}"><i class="bi bi-people"></i> Users</a></li>
+        <li><a class="nav-link" th:href="@{/issues}"><i class="bi bi-arrow-left-right"></i> Issues</a></li>
+        <li><a class="nav-link" th:href="@{/issues/overdue}"><i class="bi bi-exclamation-triangle"></i> Overdue</a></li>
+    </ul>
+</nav>
+
+<div class="main-content">
+    <div class="topbar">
+        <h5 class="mb-0">Users</h5>
+        <a th:href="@{/users/new}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i> Add User
+        </a>
+    </div>
+
+    <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show">
+        <i class="bi bi-check-circle me-2"></i><span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <form th:action="@{/users}" method="get" class="d-flex gap-2 align-items-center">
+                <div class="search-wrap flex-grow-1">
+                    <i class="bi bi-search"></i>
+                    <input type="text" name="keyword" class="form-control search-box"
+                           placeholder="Search by name or email..." th:value="${keyword}"/>
+                </div>
+                <select name="sortBy" class="form-select" style="width:130px">
+                    <option value="userName"  th:selected="${sortBy=='userName'}">Name</option>
+                    <option value="userEmail" th:selected="${sortBy=='userEmail'}">Email</option>
+                    <option value="role"      th:selected="${sortBy=='role'}">Role</option>
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i>
+                </button>
+                <a th:href="@{/users}" class="btn btn-outline-secondary">Reset</a>
+            </form>
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table mb-0">
+                <thead><tr>
+                    <th>#</th><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Actions</th>
+                </tr></thead>
+                <tbody>
+                <tr th:if="${userPage.isEmpty()}">
+                    <td colspan="6" class="text-center text-muted py-4">No users found.</td>
+                </tr>
+                <tr th:each="user, iter : ${userPage.content}">
+                    <td th:text="${userPage.number * userPage.size + iter.count}"></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:32px;height:32px;border-radius:50%;
+                                        background:#2563eb;color:#fff;display:flex;
+                                        align-items:center;justify-content:center;font-size:.8rem;font-weight:600;"
+                                 th:text="${#strings.substring(user.userName,0,1).toUpperCase()}"></div>
+                            <span th:text="${user.userName}"></span>
+                        </div>
+                    </td>
+                    <td th:text="${user.userEmail}"></td>
+                    <td th:text="${user.userPhone}"></td>
+                    <td>
+                        <span th:text="${user.userRole}"
+                              th:classappend="${user.userRole?.name() == 'ADMIN'} ? 'bg-danger' :
+                                             (${user.userRole?.name() == 'LIBRARIAN'} ? 'bg-info' : 'bg-secondary')"
+                              class="badge"></span>
+                    </td>
+                    <td>
+                        <a th:href="@{/users/{id}/edit(id=${user.userId})}"
+                           class="btn btn-sm btn-outline-primary me-1">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a th:href="@{/users/{id}/delete(id=${user.userId})}"
+                           class="btn btn-sm btn-outline-danger"
+                           onclick="return confirm('Remove this user?')">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+                Showing <span th:text="${userPage.numberOfElements}"></span>
+                of <span th:text="${userPage.totalElements}"></span> users
+            </small>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" th:classappend="${userPage.first} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/users(keyword=${keyword},page=${userPage.number-1})}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    <li th:each="pageNum : ${pageNumbers}"
+                        class="page-item"
+                        th:classappend="${pageNum - 1 == userPage.number} ? 'active'">
+                        <a class="page-link" th:text="${pageNum}"
+                           th:href="@{/users(keyword=${keyword},page=${pageNum-1})}"></a>
+                    </li>
+                    <li class="page-item" th:classappend="${userPage.last} ? 'disabled'">
+                        <a class="page-link"
+                           th:href="@{/users(keyword=${keyword},page=${userPage.number+1})}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

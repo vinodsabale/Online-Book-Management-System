@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${title} + ' | BookLib'">BookLib</title>
+    <!-- Bootstrap 5 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+          rel="stylesheet"/>
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+          rel="stylesheet"/>
+    <style>
+        body { background-color: #f0f4f8; font-family: 'Segoe UI', sans-serif; }
+        .sidebar {
+            width: 240px; min-height: 100vh;
+            background: linear-gradient(180deg, #1e3a5f 0%, #2563eb 100%);
+            position: fixed; top: 0; left: 0; padding-top: 20px; z-index: 100;
+        }
+        .sidebar .brand { color: #fff; font-size: 1.3rem; font-weight: 700;
+            padding: 16px 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.15); }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.75); padding: 10px 20px;
+            border-radius: 0 30px 30px 0; margin-right: 12px;
+            transition: all 0.2s; display: flex; align-items: center; gap: 10px;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            color: #fff; background: rgba(255,255,255,0.15);
+        }
+        .sidebar .nav-link i { font-size: 1.1rem; }
+        .main-content { margin-left: 240px; padding: 24px; }
+        .topbar { background: #fff; border-radius: 12px; padding: 14px 24px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.07); margin-bottom: 24px;
+            display: flex; justify-content: space-between; align-items: center; }
+        .card { border: none; border-radius: 14px; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+        .card-header { background: #fff; border-bottom: 1px solid #f0f0f0;
+            border-radius: 14px 14px 0 0 !important; padding: 16px 20px; font-weight: 600; }
+        .stat-card { border-radius: 14px; padding: 20px 24px; color: #fff; }
+        .badge-overdue { background: #fef2f2; color: #dc2626;
+            border: 1px solid #fecaca; border-radius: 6px; padding: 3px 8px; font-size: .75rem; }
+        .table th { font-weight: 600; font-size: .8rem;
+            text-transform: uppercase; letter-spacing: .05em;
+            color: #64748b; background: #f8fafc; border: none; }
+        .table td { vertical-align: middle; border-color: #f1f5f9; }
+        .sort-icon { font-size: .7rem; color: #94a3b8; }
+        .page-link { color: #2563eb; }
+        .page-item.active .page-link { background-color: #2563eb; border-color: #2563eb; }
+        .search-box { border-radius: 30px; padding-left: 36px; border: 1px solid #e2e8f0; }
+        .search-icon-pos { position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+            color: #94a3b8; }
+        .btn-primary { background: #2563eb; border-color: #2563eb; }
+        .btn-primary:hover { background: #1d4ed8; border-color: #1d4ed8; }
+    </style>
+</head>
+
+<body th:fragment="body">
+<!-- This fragment is not used directly; layout logic is inline per page -->
+</body>
+</html>
