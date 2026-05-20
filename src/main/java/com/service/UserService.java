@@ -1,5 +1,7 @@
 package com.service;
 import org.springframework.data.domain.Page;
+
+
 import com.dto.UserDTO;
 public interface UserService {
 	 Page<UserDTO> getAllUsers(String keyword, int page, int size, String sortBy, String sortDir);
@@ -8,4 +10,5 @@ public interface UserService {
 	    UserDTO updateUser(Long id, UserDTO userDTO);
 	    void deleteUser(Long id);
 	    long getTotalUsersCount();
+	    boolean verifyEmail(String token);
 }

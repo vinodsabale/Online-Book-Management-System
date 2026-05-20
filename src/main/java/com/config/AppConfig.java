@@ -39,32 +39,7 @@ public class AppConfig {
                         .bookTotalCopies(15).bookAvailableCopies(3)
                         .bookPublishedDate(LocalDate.of(1988, 1, 1)).bookActive(true).build());
             }
-
-            if (userRepo.count() == 0) {
-                userRepo.save(User.builder()
-                        .userName("Vinod Kumar")
-                        .userEmail("vinod@booklib.com")
-                        .userPhone("9999999999")
-                        .password(passwordEncoder.encode("admin123"))
-                        .role(User.UserRole.ADMIN)
-                        .userActive(true).build());
-                
-                userRepo.save(User.builder()
-                        .userName("Priya Librarian")
-                        .userEmail("priya@booklib.com")
-                        .userPhone("7777777777")
-                        .password(passwordEncoder.encode("lib123"))
-                        .role(User.UserRole.LIBRARIAN)
-                        .userActive(true).build());
-
-                userRepo.save(User.builder()
-                        .userName("Ravi Sharma")
-                        .userEmail("ravi@booklib.com")
-                        .userPhone("8888888888")
-                        .password(passwordEncoder.encode("member123"))
-                        .role(User.UserRole.MEMBER)
-                        .userActive(true).build());
-            }
+            // user seed काढला — आता register करूनच येणार
         };
     }
 }

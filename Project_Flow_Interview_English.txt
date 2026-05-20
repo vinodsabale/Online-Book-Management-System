@@ -1,0 +1,262 @@
+================================================================
+   ONLINE BOOK MANAGEMENT SYSTEM — PROJECT FLOW (INTERVIEW)
+================================================================
+
+----------------------------------------------------------------
+1. WHAT IS THIS PROJECT?
+----------------------------------------------------------------
+Online Book Management System is a web application.
+Built using Spring Boot + Thymeleaf + MySQL.
+
+There are 3 types of users:
+  - ADMIN     → manages everything
+  - LIBRARIAN → manages books and issues
+  - MEMBER    → views books and requests issue
+
+----------------------------------------------------------------
+2. TECHNOLOGIES USED
+----------------------------------------------------------------
+  - Spring Boot       → main framework
+  - Spring MVC        → web layer (Controller)
+  - Spring Security   → login / authentication / authorization
+  - Spring Data JPA   → database operations
+  - Hibernate         → ORM (Java object to DB table mapping)
+  - MySQL             → database
+  - Thymeleaf         → HTML templates (frontend)
+  - Spring Mail       → email verification
+  - Lombok            → reduces boilerplate code
+  - Swagger (Springdoc OpenAPI) → REST API testing
+  - Maven             → project build tool
+
+----------------------------------------------------------------
+3. PROJECT STRUCTURE
+----------------------------------------------------------------
+src/main/java/com/
+  ├── config/
+  │     ├── AppConfig.java                → seed data (books)
+  │     ├── SecurityConfig.java           → login/logout/roles config
+  │     ├── CustomUserDetailsService.java → loads user from DB
+  │     └── SwaggerConfig.java            → Swagger setup
+  │
+  ├── controller/
+  │     ├── RegisterController.java       → handles registration
+  │     ├── EmailVerificationController   → handles email verify link
+  │     ├── HomeController.java           → redirects based on role
+  │     ├── BookController.java           → books CRUD
+  │     ├── UserController.java           → manage users
+  │     ├── IssueController.java          → book issue/return
+  │     ├── LibrarianController.java      → librarian panel
+  │     ├── MemberController.java         → member panel
+  │     └── DashboardController.java      → admin dashboard
+  │
+  ├── entity/
+  │     ├── User.java    → app_users table
+  │     ├── Book.java    → books table
+  │     └── Issue.java   → issues table
+  │
+  ├── repository/
+  │     ├── UserRepository.java
+  │     ├── BookRepository.java
+  │     └── IssueRepository.java
+  │
+  ├── service/
+  │     ├── UserService.java (interface)
+  │     ├── EmailService.java
+  │     ├── BookService.java (interface)
+  │     ├── IssueService.java (interface)
+  │     └── interfac/
+  │           ├── UserServiceImpl.java
+  │           ├── BookServiceImpl.java
+  │           └── IssueServiceImpl.java
+  │
+  ├── dto/
+  │     ├── UserDTO.java
+  │     ├── BookDTO.java
+  │     └── IssueDTO.java
+  │
+  └── exception/
+        ├── GlobalExceptionHandler.java
+        ├── BadRequestException.java
+        └── ResourceNotFoundException.java
+
+----------------------------------------------------------------
+4. DATABASE TABLES
+----------------------------------------------------------------
+  app_users table:
+    - user_id, user_name, user_email, user_phone
+    - password (BCrypt encrypted)
+    - role (ADMIN / LIBRARIAN / MEMBER)
+    - user_active (true/false)
+    - is_verified (true/false)
+    - verification_token
+
+  books table:
+    - book_id, book_title, book_author, book_isbn
+    - book_genre, book_total_copies, book_available_copies
+    - book_published_date, book_active
+
+  issues table:
+    - issue_id, user_id (FK), book_id (FK)
+    - issue_date, return_date, actual_return_date
+    - status (ISSUED / RETURNED / OVERDUE)
+
+----------------------------------------------------------------
+5. REGISTRATION + EMAIL VERIFICATION FLOW
+----------------------------------------------------------------
+
+Step 1: User goes to /register page
+Step 2: Fills the form — Name, Email, Phone, Password, Role
+Step 3: RegisterController calls saveUser()
+Step 4: Inside UserServiceImpl:
+          - Checks if email already exists
+          - Generates UUID token
+          - Saves user with userActive=false, isVerified=false
+          - EmailService sends verification email via Gmail SMTP
+Step 5: User opens email and clicks the verification link
+          link: http://localhost:8082/verify-email?token=UUID
+Step 6: EmailVerificationController calls verifyEmail(token)
+Step 7: Inside UserServiceImpl:
+          - Finds user by token
+          - Sets isVerified=true, userActive=true
+          - Clears the token (sets to null)
+          - Saves to DB
+Step 8: "Email Verified!" page is shown → user goes to Login
+
+----------------------------------------------------------------
+6. LOGIN FLOW
+----------------------------------------------------------------
+
+Step 1: User goes to /login page
+Step 2: Enters Email + Password
+Step 3: Spring Security calls CustomUserDetailsService
+Step 4: CustomUserDetailsService:
+          - Finds user by email from DB
+          - If isVerified is false → login blocked
+          - If userActive is false → login blocked
+          - Returns UserDetails object (email, password, ROLE)
+Step 5: Spring Security verifies password using BCrypt
+Step 6: Login successful → HomeController
+Step 7: HomeController checks role and redirects:
+          - ADMIN     → /dashboard
+          - LIBRARIAN → /librarian/dashboard
+          - MEMBER    → /member/dashboard
+
+----------------------------------------------------------------
+7. ROLE BASED ACCESS (Spring Security)
+----------------------------------------------------------------
+
+  /register, /login, /verify-email  → open for everyone (permitAll)
+  /dashboard, /books/**, /users/**  → ADMIN only
+  /librarian/**                     → ADMIN + LIBRARIAN
+  /member/**                        → MEMBER only
+  everything else                   → must be authenticated
+
+----------------------------------------------------------------
+8. BOOK ISSUE FLOW
+----------------------------------------------------------------
+
+Step 1: ADMIN/LIBRARIAN creates a new issue
+Step 2: Selects User and Book
+Step 3: IssueServiceImpl:
+          - Checks if book available copies > 0
+          - Creates issue record (status = ISSUED)
+          - Decrements book available copies by 1
+Step 4: When book is returned:
+          - Status = RETURNED
+          - Book available copies + 1
+          - If overdue, fine is calculated
+
+----------------------------------------------------------------
+9. WHY DTO PATTERN?
+----------------------------------------------------------------
+
+Instead of exposing Entity (User) directly, DTO (UserDTO) is used.
+  - Security → password field not present in DTO
+               (except during registration)
+  - Validation → @Valid annotations on DTO
+  - DTO is passed between Controller and Service
+  - Service converts DTO to Entity (toEntity method)
+  - Service converts Entity to DTO (toDTO method)
+
+----------------------------------------------------------------
+10. EXCEPTION HANDLING
+----------------------------------------------------------------
+
+GlobalExceptionHandler (@ControllerAdvice):
+  - ResourceNotFoundException → 404 page
+  - BadRequestException       → 400 error
+  - All exceptions handled in one single place
+
+----------------------------------------------------------------
+11. COMMON INTERVIEW QUESTIONS + ANSWERS
+----------------------------------------------------------------
+
+Q: What is Spring Boot?
+A: It is an extension of the Spring framework. Auto-configuration,
+   embedded Tomcat, and starter dependencies reduce the setup
+   effort significantly.
+
+Q: How does Spring Security work?
+A: It uses a filter chain. Every incoming request is intercepted.
+   CustomUserDetailsService loads the user from DB.
+   BCrypt verifies the password. Access is given based on role.
+
+Q: What is BCrypt?
+A: It is a password hashing algorithm. Plain password is never
+   stored in DB. Password is encoded during registration and
+   verified using matches() during login.
+
+Q: Difference between JPA and Hibernate?
+A: JPA is a specification (interface).
+   Hibernate is the implementation.
+   Using Spring Data JPA, methods like findById, save, delete
+   are available automatically.
+
+Q: Why did you use DTO?
+A: Directly exposing the Entity can leak sensitive data like
+   password. DTO contains only the necessary fields needed
+   for a particular operation.
+
+Q: How did you implement Email Verification?
+A: During registration, a UUID token is generated.
+   Spring Mail sends a verification link via Gmail SMTP.
+   When the user clicks the link, the token is matched in DB,
+   isVerified=true and userActive=true are set.
+
+Q: Why did you use @Transactional?
+A: Multiple DB operations happen together. If any one fails,
+   the whole transaction is rolled back. This prevents data
+   inconsistency.
+
+Q: How did you implement Pagination?
+A: Used Spring Data JPA's Pageable interface.
+   PageRequest.of(page, size, sort) handles page number,
+   page size, and sorting together.
+
+Q: What is @ControllerAdvice?
+A: It is used for global exception handling. Instead of
+   writing try-catch in every controller, all exceptions
+   are handled in one class using @ExceptionHandler.
+
+Q: What is the difference between @Controller and @RestController?
+A: @Controller returns a view (HTML page via Thymeleaf).
+   @RestController returns data directly (JSON) — used for
+   REST API endpoints.
+
+----------------------------------------------------------------
+12. PROJECT SUMMARY (say this in interview)
+----------------------------------------------------------------
+
+"I built an Online Book Management System using Spring Boot.
+The system has three roles — Admin, Librarian, and Member.
+I implemented User Registration with Email Verification using
+Spring Mail and Gmail SMTP. Spring Security handles login,
+logout, and role-based access control. The backend uses
+Spring Data JPA with Hibernate and MySQL for data persistence.
+The frontend is built using Thymeleaf templates. I also
+implemented Book Management, Issue and Return system with
+overdue tracking, and REST APIs documented with Swagger."
+
+================================================================
+                        BEST OF LUCK!
+================================================================

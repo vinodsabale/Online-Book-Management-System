@@ -26,7 +26,9 @@ public class SecurityConfig {
                 .requestMatchers(
                 		"/login","/login/**","/home",
                 		"/css/**","/js/**","/images/**",
-                		"/webjars/**","/error"
+                		"/webjars/**","/error",
+                		"/verify-email",
+                		"/register"
                 		).permitAll()
                 .requestMatchers("/member/**").hasRole("MEMBER")
 

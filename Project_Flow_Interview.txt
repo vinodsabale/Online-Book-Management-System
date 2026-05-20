@@ -1,0 +1,247 @@
+================================================================
+   ONLINE BOOK MANAGEMENT SYSTEM — PROJECT FLOW (INTERVIEW)
+================================================================
+
+----------------------------------------------------------------
+1. PROJECT काय आहे?
+----------------------------------------------------------------
+Online Book Management System हे एक web application आहे.
+Spring Boot + Thymeleaf + MySQL वापरून बनवलं आहे.
+
+यात 3 types चे users आहेत:
+  - ADMIN     → सगळं manage करतो
+  - LIBRARIAN → books आणि issues बघतो
+  - MEMBER    → books बघतो आणि issue request करतो
+
+----------------------------------------------------------------
+2. TECHNOLOGIES वापरल्या
+----------------------------------------------------------------
+  - Spring Boot       → main framework
+  - Spring MVC        → web layer (Controller)
+  - Spring Security   → login / authentication / authorization
+  - Spring Data JPA   → database operations
+  - Hibernate         → ORM (Java object ↔ DB table)
+  - MySQL             → database
+  - Thymeleaf         → HTML templates (frontend)
+  - Spring Mail       → email verification
+  - Lombok            → boilerplate code कमी करायला
+  - Swagger (Springdoc OpenAPI) → REST API testing
+  - Maven             → project build tool
+
+----------------------------------------------------------------
+3. PROJECT STRUCTURE
+----------------------------------------------------------------
+src/main/java/com/
+  ├── config/
+  │     ├── AppConfig.java              → seed data (books)
+  │     ├── SecurityConfig.java         → login/logout/roles config
+  │     ├── CustomUserDetailsService.java → DB मधून user load करतो
+  │     └── SwaggerConfig.java          → Swagger setup
+  │
+  ├── controller/
+  │     ├── RegisterController.java     → registration handle
+  │     ├── EmailVerificationController → email verify link handle
+  │     ├── HomeController.java         → role नुसार redirect
+  │     ├── BookController.java         → books CRUD
+  │     ├── UserController.java         → users manage
+  │     ├── IssueController.java        → book issue/return
+  │     ├── LibrarianController.java    → librarian panel
+  │     ├── MemberController.java       → member panel
+  │     └── DashboardController.java    → admin dashboard
+  │
+  ├── entity/
+  │     ├── User.java    → app_users table
+  │     ├── Book.java    → books table
+  │     └── Issue.java   → issues table
+  │
+  ├── repository/
+  │     ├── UserRepository.java
+  │     ├── BookRepository.java
+  │     └── IssueRepository.java
+  │
+  ├── service/
+  │     ├── UserService.java (interface)
+  │     ├── EmailService.java
+  │     ├── BookService.java (interface)
+  │     ├── IssueService.java (interface)
+  │     └── interfac/
+  │           ├── UserServiceImpl.java
+  │           ├── BookServiceImpl.java
+  │           └── IssueServiceImpl.java
+  │
+  ├── dto/
+  │     ├── UserDTO.java
+  │     ├── BookDTO.java
+  │     └── IssueDTO.java
+  │
+  └── exception/
+        ├── GlobalExceptionHandler.java
+        ├── BadRequestException.java
+        └── ResourceNotFoundException.java
+
+----------------------------------------------------------------
+4. DATABASE TABLES
+----------------------------------------------------------------
+  app_users table:
+    - user_id, user_name, user_email, user_phone
+    - password (BCrypt encrypted)
+    - role (ADMIN / LIBRARIAN / MEMBER)
+    - user_active (true/false)
+    - is_verified (true/false)
+    - verification_token
+
+  books table:
+    - book_id, book_title, book_author, book_isbn
+    - book_genre, book_total_copies, book_available_copies
+    - book_published_date, book_active
+
+  issues table:
+    - issue_id, user_id (FK), book_id (FK)
+    - issue_date, return_date, actual_return_date
+    - status (ISSUED / RETURNED / OVERDUE)
+
+----------------------------------------------------------------
+5. REGISTRATION + EMAIL VERIFICATION FLOW
+----------------------------------------------------------------
+
+Step 1: User /register page वर जातो
+Step 2: Form भरतो — Name, Email, Phone, Password, Role
+Step 3: RegisterController → saveUser() call होतो
+Step 4: UserServiceImpl मध्ये:
+          - Email already exists का check होतो
+          - UUID token generate होतो
+          - User save होतो (userActive=false, isVerified=false)
+          - EmailService → Gmail SMTP ने verification email जातो
+Step 5: User email उघडतो → link click करतो
+          link: http://localhost:8082/verify-email?token=UUID
+Step 6: EmailVerificationController → verifyEmail(token) call होतो
+Step 7: UserServiceImpl मध्ये:
+          - Token वरून user शोधतो
+          - isVerified=true, userActive=true set होतो
+          - Token null होतो
+          - DB save होतो
+Step 8: "Email Verified!" page दिसतो → Login ला जातो
+
+----------------------------------------------------------------
+6. LOGIN FLOW
+----------------------------------------------------------------
+
+Step 1: User /login page वर जातो
+Step 2: Email + Password टाकतो
+Step 3: Spring Security → CustomUserDetailsService ला call करतो
+Step 4: CustomUserDetailsService:
+          - DB मधून email ने user शोधतो
+          - isVerified false असेल तर → login block
+          - userActive false असेल तर → login block
+          - UserDetails object return करतो (email, password, ROLE)
+Step 5: Spring Security password BCrypt ने verify करतो
+Step 6: Login successful → HomeController
+Step 7: HomeController role बघतो आणि redirect करतो:
+          - ADMIN     → /dashboard
+          - LIBRARIAN → /librarian/dashboard
+          - MEMBER    → /member/dashboard
+
+----------------------------------------------------------------
+7. ROLE WISE ACCESS (Spring Security)
+----------------------------------------------------------------
+
+  /register, /login, /verify-email  → सगळ्यांना open (permitAll)
+  /dashboard, /books/**, /users/**  → फक्त ADMIN
+  /librarian/**                     → ADMIN + LIBRARIAN
+  /member/**                        → फक्त MEMBER
+  बाकी सगळं                        → authenticated असणं mandatory
+
+----------------------------------------------------------------
+8. BOOK ISSUE FLOW
+----------------------------------------------------------------
+
+Step 1: ADMIN/LIBRARIAN → Issue new book
+Step 2: User select करतो, Book select करतो
+Step 3: IssueServiceImpl:
+          - Book available copies > 0 check होतो
+          - Issue record तयार होतो (status = ISSUED)
+          - Book available copies - 1 होतो
+Step 4: Return केल्यावर:
+          - Status = RETURNED
+          - Book available copies + 1 होतो
+          - Overdue असेल तर fine calculate होतो
+
+----------------------------------------------------------------
+9. DTO PATTERN का वापरला?
+----------------------------------------------------------------
+
+Entity (User) directly expose न करता DTO (UserDTO) वापरला.
+  - Security → password field DTO मध्ये नाही (except registration)
+  - Validation → DTO वर @Valid annotations
+  - Controller ↔ Service मध्ये DTO pass होतो
+  - Service → Entity मध्ये convert करतो (toEntity method)
+  - Entity → DTO मध्ये convert करतो (toDTO method)
+
+----------------------------------------------------------------
+10. EXCEPTION HANDLING
+----------------------------------------------------------------
+
+GlobalExceptionHandler (@ControllerAdvice):
+  - ResourceNotFoundException → 404 page
+  - BadRequestException       → 400 error
+  - सगळ्या exceptions एकाच जागी handle होतात
+
+----------------------------------------------------------------
+11. INTERVIEW ला विचारतात ते QUESTIONS + ANSWERS
+----------------------------------------------------------------
+
+Q: Spring Boot म्हणजे काय?
+A: Spring framework चा extension आहे. Auto-configuration,
+   embedded Tomcat, starter dependencies यामुळे setup
+   खूप कमी होतो.
+
+Q: Spring Security कसं काम करतं?
+A: Filter chain वापरतो. प्रत्येक request intercept होतो.
+   CustomUserDetailsService DB मधून user load करतो.
+   BCrypt ने password verify होतो. Role नुसार access दिला
+   जातो.
+
+Q: BCrypt म्हणजे काय?
+A: Password hashing algorithm आहे. Plain password DB मध्ये
+   save होत नाही. Register करताना encode होतो,
+   login करताना matches() ने verify होतो.
+
+Q: JPA आणि Hibernate फरक काय?
+A: JPA हे specification आहे (interface).
+   Hibernate हे implementation आहे.
+   Spring Data JPA वापरल्यामुळे findById, save, delete
+   आपोआप मिळतात.
+
+Q: DTO का वापरला?
+A: Entity directly expose केल्यास sensitive data
+   (password) बाहेर जातो. DTO मध्ये फक्त necessary
+   fields असतात.
+
+Q: Email Verification कसं implement केलं?
+A: Registration वेळी UUID token generate करतो.
+   Spring Mail ने Gmail SMTP वापरून link email करतो.
+   User link click केल्यावर token DB मध्ये match होतो,
+   isVerified=true आणि userActive=true set होतो.
+
+Q: @Transactional का वापरला?
+A: Multiple DB operations एकत्र होतात. एखादी fail
+   झाली तर rollback होतो. Data inconsistency होत नाही.
+
+Q: Pagination कशी केली?
+A: Spring Data JPA चा Pageable वापरला.
+   PageRequest.of(page, size, sort) ने page, size,
+   sorting एकत्र handle होतं.
+
+----------------------------------------------------------------
+12. PROJECT SUMMARY (2 ओळीत सांगायचं असेल तर)
+----------------------------------------------------------------
+
+"Online Book Management System हे Spring Boot project आहे.
+यात User Registration, Email Verification, Role-based Login,
+Book Management आणि Issue/Return System implement केलं आहे.
+Spring Security, Spring Mail, JPA/Hibernate, MySQL आणि
+Thymeleaf वापरलं आहे."
+
+================================================================
+                        BEST OF LUCK!
+================================================================

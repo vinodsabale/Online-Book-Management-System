@@ -1,23 +1,14 @@
 package com.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
-@Table(name = "app_users")    // ← "user" se "app_users" karo — H2 reserved word fix
-@Data
+@Table(name = "app_users")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -39,9 +30,16 @@ public class User {
     @Enumerated(EnumType.STRING)
     private UserRole role = UserRole.MEMBER;
 
+    @Column(name = "user_active")
     private boolean userActive = true;
+
     @Column(nullable = false)
     private String password;
+
+    private String verificationToken;
+
+    @Column(name = "is_verified")
+    private boolean verified = false;   // ← "isVerified" नाही, "verified" कर
+
     public enum UserRole { ADMIN, MEMBER, LIBRARIAN }
- 
 }
