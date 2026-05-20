@@ -129,7 +129,6 @@ http://localhost:8080/swagger-ui/index.html
 
 # 📸 Screenshots
 
-Add screenshots here later.
 
 Example:
 
